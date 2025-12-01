@@ -58,8 +58,13 @@ export default function ChatInterface({
     return (
       <div className="chat-interface">
         <div className="empty-state">
-          <h2>Welcome to LLM Council <span className="plus-text">Plus</span></h2>
+          <h1>Welcome to LLM Council <span className="plus-text">Plus</span></h1>
           <p>Create a new conversation to get started</p>
+          <div className="app-footer">
+            <span>Version: 1.0.0</span>
+            <span className="footer-separator">•</span>
+            <span>Created by: Jacob Ben-David</span>
+          </div>
         </div>
       </div>
     );
@@ -67,169 +72,144 @@ export default function ChatInterface({
 
   return (
     <div className="chat-interface">
-      <div className="messages-container" ref={messagesContainerRef}>
-        {conversation.messages.length === 0 ? (
-          <div className="empty-state">
-            <h2>Start a conversation</h2>
-            <p>Ask a question to consult the LLM Council</p>
+      {/* Messages Area */}
+      <div className="messages-area" ref={messagesContainerRef}>
+        {(!conversation || conversation.messages.length === 0) ? (
+          <div className="hero-container">
+            <div className="hero-content">
+              <h1>Welcome to LLM Council <span className="text-gradient">Plus</span></h1>
+              <p className="hero-subtitle">
+                Create a new conversation to get started
+              </p>
+            </div>
+            <div className="hero-footer">
+              Version: 1.0.0 • Created by: Jacob Ben-David
+            </div>
           </div>
         ) : (
           conversation.messages.map((msg, index) => (
-            <div key={index} className="message-group">
-              {msg.role === 'user' ? (
-                <div className="user-message">
-                  <div className="message-label">You</div>
-                  <div className="message-content">
-                    <div className="markdown-content">
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
+            <div key={index} className={`message ${msg.role}`}>
+              <div className="message-role">
+                {msg.role === 'user' ? 'You' : 'LLM Council'}
+              </div>
+              
+              <div className="message-content">
+                {msg.role === 'user' ? (
+                  <div className="markdown-content">
+                    <ReactMarkdown>{msg.content}</ReactMarkdown>
                   </div>
-                </div>
-              ) : (
-                <div className="assistant-message">
-                  <div className="message-label">LLM Council</div>
+                ) : (
+                  <>
+                    {/* Search Loading */}
+                    {msg.loading?.search && (
+                      <div className="stage-loading">
+                        <div className="spinner"></div>
+                        <span>Searching the web...</span>
+                      </div>
+                    )}
 
-                  {/* Search Loading */}
-                  {msg.loading?.search && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>Searching the web...</span>
-                      <button className="abort-btn-inline" onClick={onAbort}>Stop</button>
-                    </div>
-                  )}
+                    {/* Search Context */}
+                    {msg.metadata?.search_context && (
+                      <SearchContext
+                        searchQuery={msg.metadata?.search_query}
+                        searchContext={msg.metadata?.search_context}
+                      />
+                    )}
 
-                  {/* Search Context (if web search was used) */}
-                  {msg.metadata?.search_context && (
-                    <SearchContext
-                      searchQuery={msg.metadata?.search_query}
-                      searchContext={msg.metadata?.search_context}
-                    />
-                  )}
+                    {/* Stage 1 */}
+                    {msg.loading?.stage1 && (
+                      <div className="stage-loading">
+                        <div className="spinner"></div>
+                        <span>Running Stage 1... {msg.progress?.stage1?.count}/{msg.progress?.stage1?.total}</span>
+                      </div>
+                    )}
+                    {msg.stage1 && (
+                      <Stage1
+                        responses={msg.stage1}
+                        startTime={msg.timers?.stage1Start}
+                        endTime={msg.timers?.stage1End}
+                      />
+                    )}
 
-                  {/* Stage 1 */}
-                  {msg.loading?.stage1 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>
-                        Running Stage 1: Collecting individual responses...
-                        {msg.progress?.stage1?.total > 0 && (
-                          <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-                            ({msg.progress.stage1.count}/{msg.progress.stage1.total})
-                          </span>
-                        )}
-                        <StageTimer startTime={msg.timers?.stage1Start} />
-                      </span>
-                      <button className="abort-btn-inline" onClick={onAbort}>Stop</button>
-                    </div>
-                  )}
-                  {msg.stage1 && (
-                    <Stage1
-                      responses={msg.stage1}
-                      startTime={msg.timers?.stage1Start}
-                      endTime={msg.timers?.stage1End}
-                    />
-                  )}
+                    {/* Stage 2 */}
+                    {msg.loading?.stage2 && (
+                      <div className="stage-loading">
+                        <div className="spinner"></div>
+                        <span>Running Stage 2...</span>
+                      </div>
+                    )}
+                    {msg.stage2 && (
+                      <Stage2
+                        rankings={msg.stage2}
+                        labelToModel={msg.metadata?.label_to_model}
+                        aggregateRankings={msg.metadata?.aggregate_rankings}
+                        startTime={msg.timers?.stage2Start}
+                        endTime={msg.timers?.stage2End}
+                      />
+                    )}
 
-                  {/* Stage 2 */}
-                  {msg.loading?.stage2 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>
-                        Running Stage 2: Peer rankings...
-                        {msg.progress?.stage2?.total > 0 && (
-                          <span style={{ marginLeft: '8px', fontWeight: 'bold' }}>
-                            ({msg.progress.stage2.count}/{msg.progress.stage2.total})
-                          </span>
-                        )}
-                        <StageTimer startTime={msg.timers?.stage2Start} />
-                      </span>
-                      <button className="abort-btn-inline" onClick={onAbort}>Stop</button>
-                    </div>
-                  )}
-                  {msg.stage2 && (
-                    <Stage2
-                      rankings={msg.stage2}
-                      labelToModel={msg.metadata?.label_to_model}
-                      aggregateRankings={msg.metadata?.aggregate_rankings}
-                      startTime={msg.timers?.stage2Start}
-                      endTime={msg.timers?.stage2End}
-                    />
-                  )}
-
-                  {/* Stage 3 */}
-                  {msg.loading?.stage3 && (
-                    <div className="stage-loading">
-                      <div className="spinner"></div>
-                      <span>
-                        Running Stage 3: Final synthesis...
-                        <StageTimer startTime={msg.timers?.stage3Start} />
-                      </span>
-                      <button className="abort-btn-inline" onClick={onAbort}>Stop</button>
-                    </div>
-                  )}
-                  {msg.stage3 && (
-                    <Stage3
-                      finalResponse={msg.stage3}
-                      startTime={msg.timers?.stage3Start}
-                      endTime={msg.timers?.stage3End}
-                    />
-                  )}
-                </div>
-              )}
+                    {/* Stage 3 */}
+                    {msg.loading?.stage3 && (
+                      <div className="stage-loading">
+                        <div className="spinner"></div>
+                        <span>Final Synthesis...</span>
+                      </div>
+                    )}
+                    {msg.stage3 && (
+                      <Stage3
+                        finalResponse={msg.stage3}
+                        startTime={msg.timers?.stage3Start}
+                        endTime={msg.timers?.stage3End}
+                      />
+                    )}
+                  </>
+                )}
+              </div>
             </div>
           ))
         )}
-
-        {isLoading && (
-          <div className="loading-indicator">
-            <div className="spinner"></div>
-            <span>Consulting the council...</span>
-            <button className="abort-btn" onClick={onAbort}>
-              Stop
-            </button>
-          </div>
-        )}
-
-        <div ref={messagesEndRef} />
+        
+        {/* Bottom Spacer for floating input */}
+        <div ref={messagesEndRef} style={{ height: '20px' }} />
       </div>
 
-      <form className="input-form" onSubmit={handleSubmit}>
-        {isLoading && (
-          <div className="input-disabled-notice">
-            This app is designed for one query at a time. Please wait for the current query to complete or click "Stop" to cancel it.
-          </div>
-        )}
-        <div className="input-row">
+      {/* Floating Command Capsule */}
+      <div className="input-area">
+        <form className="input-container" onSubmit={handleSubmit}>
+          <label className={`search-toggle ${webSearch ? 'active' : ''}`} title="Toggle Web Search">
+            <input 
+              type="checkbox" 
+              className="search-checkbox"
+              checked={webSearch}
+              onChange={() => setWebSearch(!webSearch)}
+              disabled={isLoading}
+            />
+            <span className="search-icon">🌐</span>
+            {webSearch && <span className="search-label">Search On</span>}
+          </label>
+          
           <textarea
             className="message-input"
-            placeholder="Ask your question... (Shift+Enter for new line, Enter to send)"
+            placeholder={isLoading ? "Consulting..." : "Ask the Council..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={isLoading}
-            rows={3}
+            rows={1}
+            style={{ height: 'auto', minHeight: '24px' }}
           />
-          <div className="input-actions">
-            <button
-              type="button"
-              className={`web-search-button ${webSearch ? 'active' : ''}`}
-              onClick={() => setWebSearch(!webSearch)}
-              disabled={isLoading}
-              title="Toggle Web Search"
-            >
-              <span className="search-icon">🌐</span>
-              {webSearch ? 'Search ON' : 'Search OFF'}
+          
+          {isLoading ? (
+            <button type="button" className="send-button stop-button" onClick={onAbort} title="Stop Generation">
+              ⏹
             </button>
-            <button
-              type="submit"
-              className="send-button"
-              disabled={!input.trim() || isLoading}
-            >
-              Send
+          ) : (
+            <button type="submit" className="send-button" disabled={!input.trim()}>
+              ➤
             </button>
-          </div>
-        </div>
-      </form>
+          )}
+        </form>
+      </div>
     </div>
   );
 }

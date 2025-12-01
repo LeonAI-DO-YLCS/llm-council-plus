@@ -1,33 +1,36 @@
 import ReactMarkdown from 'react-markdown';
+import { getModelVisuals, getShortModelName } from '../utils/modelHelpers';
 import './Stage3.css';
 import StageTimer from './StageTimer';
-
-function getShortModelName(modelId) {
-  if (!modelId) return 'Unknown';
-
-  let displayName = modelId;
-  if (modelId.includes('/')) {
-    displayName = modelId.split('/')[1] || modelId;
-  } else if (modelId.includes(':')) {
-    displayName = modelId.split(':')[1] || modelId;
-  }
-  return displayName;
-}
 
 export default function Stage3({ finalResponse, startTime, endTime }) {
   if (!finalResponse) {
     return null;
   }
 
+  const visuals = getModelVisuals(finalResponse?.model);
+  const shortName = getShortModelName(finalResponse?.model);
+
   return (
-    <div className="stage stage3">
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 className="stage-title" style={{ margin: 0 }}>Stage 3: Final Council Answer</h3>
+    <div className="stage-container stage-3">
+      <div className="stage-header">
+        <div className="stage-title">
+          <span className="stage-icon">⚖️</span>
+          Stage 3: Final Council Answer
+        </div>
         <StageTimer startTime={startTime} endTime={endTime} label="Duration" />
       </div>
       <div className="final-response">
-        <div className="chairman-label">
-          Chairman: {getShortModelName(finalResponse?.model)}
+        <div className="chairman-header">
+          <div className="chairman-identity">
+            <span className="chairman-avatar" style={{ backgroundColor: visuals.color }}>
+              {visuals.icon}
+            </span>
+            <div className="chairman-info">
+              <span className="chairman-role">Chairman's Verdict</span>
+              <span className="chairman-model">{visuals.name} {shortName}</span>
+            </div>
+          </div>
         </div>
         <div className="final-text markdown-content">
           <ReactMarkdown>

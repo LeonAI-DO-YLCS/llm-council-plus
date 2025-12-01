@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { getModelVisuals, getShortModelName } from '../utils/modelHelpers';
 import './Stage1.css';
 
 import StageTimer from './StageTimer';
@@ -7,7 +8,7 @@ import StageTimer from './StageTimer';
 export default function Stage1({ responses, startTime, endTime }) {
   const [activeTab, setActiveTab] = useState(0);
 
-  // Reset activeTab if it becomes out of bounds (e.g., during streaming)
+  // Reset activeTab if it becomes out of bounds
   useEffect(() => {
     if (responses && responses.length > 0 && activeTab >= responses.length) {
       setActiveTab(responses.length - 1);
@@ -18,59 +19,76 @@ export default function Stage1({ responses, startTime, endTime }) {
     return null;
   }
 
-  // Ensure activeTab is within bounds
   const safeActiveTab = Math.min(activeTab, responses.length - 1);
   const currentResponse = responses[safeActiveTab] || {};
   const hasError = currentResponse?.error || false;
-
+  
   const gridColumns = Math.min(responses.length, 4);
 
+  // Get visuals for current tab
+  const currentVisuals = getModelVisuals(currentResponse?.model);
+
   return (
-    <div className="stage stage1">
-      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-        <h3 className="stage-title" style={{ margin: 0 }}>Stage 1: Individual Responses</h3>
+    <div className="stage-container stage-1">
+      <div className="stage-header">
+        <div className="stage-title">
+          <span className="stage-icon">💬</span>
+          Stage 1: Individual Perspectives
+        </div>
         <StageTimer startTime={startTime} endTime={endTime} label="Duration" />
       </div>
 
+      {/* Avatar Tabs */}
       <div
         className="tabs"
         style={{ gridTemplateColumns: `repeat(${gridColumns}, 1fr)` }}
       >
         {responses.map((resp, index) => {
-          // Extract short name from model ID
-          // For formats like "openai/gpt-4" or "ollama:llama3"
-          const modelId = resp?.model || 'Unknown';
-          let displayName = modelId;
-
-          if (modelId.includes('/')) {
-            displayName = modelId.split('/')[1] || modelId;
-          } else if (modelId.includes(':')) {
-            displayName = modelId.split(':')[1] || modelId;
-          }
+          const visuals = getModelVisuals(resp?.model);
+          const shortName = getShortModelName(resp?.model);
 
           return (
             <button
               key={index}
-              className={`tab ${safeActiveTab === index ? 'active' : ''} ${resp?.error ? 'tab-error' : ''} `}
+              className={`tab ${safeActiveTab === index ? 'active' : ''} ${resp?.error ? 'tab-error' : ''}`}
               onClick={() => setActiveTab(index)}
-              title={resp?.error ? resp.error_message : ''}
+              style={safeActiveTab === index ? { borderColor: visuals.color, color: visuals.color } : {}}
+              title={resp?.model}
             >
-              {resp?.error && <span className="error-indicator">!</span>}
-              {displayName}
+              <span className="tab-icon" style={{ backgroundColor: safeActiveTab === index ? 'transparent' : 'rgba(255,255,255,0.1)' }}>
+                {visuals.icon}
+              </span>
+              <span className="tab-name">{shortName}</span>
+              {resp?.error && <span className="error-badge">!</span>}
             </button>
           );
         })}
       </div>
 
-      <div className="tab-content">
-        <div className="model-name">
-          {currentResponse.model || 'Unknown Model'}
-          {hasError && <span className="model-status error">Failed</span>}
-          {!hasError && <span className="model-status success">Success</span>}
+      <div className="tab-content glass-panel">
+        <div className="model-header">
+          <div className="model-identity">
+            <span className="model-avatar" style={{ backgroundColor: hasError ? '#ef4444' : currentVisuals.color }}>
+              {currentVisuals.icon}
+            </span>
+            <div className="model-info">
+              <span className="model-name-large">{currentResponse.model || 'Unknown Model'}</span>
+              <span className="model-provider-badge" style={{ borderColor: currentVisuals.color, color: currentVisuals.color }}>
+                {currentVisuals.name}
+              </span>
+            </div>
+          </div>
+          
+          {hasError ? (
+            <span className="model-status error">Failed</span>
+          ) : (
+            <span className="model-status success">Completed</span>
+          )}
         </div>
+
         {hasError ? (
           <div className="response-error">
-            <div className="error-icon">!</div>
+            <div className="error-icon">⚠️</div>
             <div className="error-details">
               <div className="error-title">Model Failed to Respond</div>
               <div className="error-message">{currentResponse?.error_message || 'Unknown error'}</div>
