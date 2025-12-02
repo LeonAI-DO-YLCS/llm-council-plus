@@ -557,12 +557,13 @@ function App() {
       // Handle aborted requests - mark message as aborted
       if (error.name === 'AbortError') {
         console.log('Request aborted');
-        // Mark the assistant message as aborted
+        // Mark the assistant message as aborted and stop timers
         setCurrentConversation((prev) => {
           if (!prev || prev.messages.length < 2) return prev;
           const messages = [...prev.messages];
           const lastMsg = messages[messages.length - 1];
           if (lastMsg.role === 'assistant') {
+            const now = Date.now();
             messages[messages.length - 1] = {
               ...lastMsg,
               aborted: true,
@@ -571,6 +572,13 @@ function App() {
                 stage1: false,
                 stage2: false,
                 stage3: false,
+              },
+              timers: {
+                ...lastMsg.timers,
+                // Stop any running timers
+                stage1End: lastMsg.timers?.stage1Start && !lastMsg.timers?.stage1End ? now : lastMsg.timers?.stage1End,
+                stage2End: lastMsg.timers?.stage2Start && !lastMsg.timers?.stage2End ? now : lastMsg.timers?.stage2End,
+                stage3End: lastMsg.timers?.stage3Start && !lastMsg.timers?.stage3End ? now : lastMsg.timers?.stage3End,
               }
             };
           }
