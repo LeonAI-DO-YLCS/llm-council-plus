@@ -576,19 +576,20 @@
   align-items: center;
   gap: 8px;
   font-size: 14px;
-  color: #333;
+  color: #e5e7eb;
   cursor: pointer;
-  margin-bottom: 0; /* Ensure no extra margin */
+  margin-bottom: 0;
 }
 
 .free-filter-label input[type="checkbox"] {
   width: 16px;
   height: 16px;
+  accent-color: #3b82f6;
 }
 
 .loading-models {
   font-size: 13px;
-  color: #666;
+  color: #9ca3af;
   font-style: italic;
 }
 
