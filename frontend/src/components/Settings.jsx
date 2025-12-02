@@ -1498,8 +1498,8 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama }) {
                                                 type="button"
                                                 className={`type-btn ${memberFilter === 'remote' ? 'active' : ''}`}
                                                 onClick={() => handleMemberFilterChange(index, 'remote')}
-                                                disabled={!enabledProviders.openrouter && !enabledProviders.direct}
-                                                title={!enabledProviders.openrouter && !enabledProviders.direct ? 'Enable OpenRouter or Direct Connections first' : ''}
+                                                disabled={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq}
+                                                title={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq ? 'Enable OpenRouter, Groq, or Direct Connections first' : ''}
                                               >
                                                 Remote
                                               </button>
@@ -1583,8 +1583,8 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama }) {
                             setChairmanFilter('remote');
                             setChairmanModel('');
                           }}
-                          disabled={!enabledProviders.openrouter && !enabledProviders.direct}
-                          title={!enabledProviders.openrouter && !enabledProviders.direct ? 'Enable OpenRouter or Direct Connections first' : ''}
+                          disabled={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq}
+                          title={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq ? 'Enable OpenRouter, Groq, or Direct Connections first' : ''}
                         >
                           Remote
                         </button>
@@ -1626,8 +1626,8 @@ export default function Settings({ onClose, ollamaStatus, onRefreshOllama }) {
                             setSearchQueryFilter('remote');
                             setSearchQueryModel('');
                           }}
-                          disabled={!enabledProviders.openrouter && !enabledProviders.direct}
-                          title={!enabledProviders.openrouter && !enabledProviders.direct ? 'Enable OpenRouter or Direct Connections first' : ''}
+                          disabled={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq}
+                          title={!enabledProviders.openrouter && !enabledProviders.direct && !enabledProviders.groq ? 'Enable OpenRouter, Groq, or Direct Connections first' : ''}
                         >
                           Remote
                         </button>
