@@ -18,6 +18,8 @@ function App() {
     testing: false
   });
   const [councilConfigured, setCouncilConfigured] = useState(true); // Assume configured until checked
+  const [councilModels, setCouncilModels] = useState([]);
+  const [chairmanModel, setChairmanModel] = useState(null);
   const abortControllerRef = useRef(null);
   const requestIdRef = useRef(0);
 
@@ -30,25 +32,25 @@ function App() {
     try {
       // 1. Get Settings to check for API keys
       const settings = await api.getSettings();
-      
-      const hasApiKey = settings.openrouter_api_key_set || 
-                        settings.groq_api_key_set || 
-                        settings.openai_api_key_set || 
-                        settings.anthropic_api_key_set || 
-                        settings.google_api_key_set || 
-                        settings.mistral_api_key_set || 
-                        settings.deepseek_api_key_set;
+
+      const hasApiKey = settings.openrouter_api_key_set ||
+        settings.groq_api_key_set ||
+        settings.openai_api_key_set ||
+        settings.anthropic_api_key_set ||
+        settings.google_api_key_set ||
+        settings.mistral_api_key_set ||
+        settings.deepseek_api_key_set;
 
       // 2. Test Ollama Connection
       // We do this regardless to update the status indicator
       const ollamaUrl = settings.ollama_base_url || 'http://localhost:11434';
       setOllamaStatus(prev => ({ ...prev, testing: true }));
-      
+
       let isOllamaConnected = false;
       try {
         const result = await api.testOllamaConnection(ollamaUrl);
         isOllamaConnected = result.success;
-        
+
         if (result.success) {
           setOllamaStatus({
             connected: true,
@@ -64,9 +66,14 @@ function App() {
       }
 
       // 3. Check if council is configured (has models selected)
-      const councilModels = settings.council_models || [];
-      const hasCouncilMembers = councilModels.some(m => m && m.trim() !== '');
-      const hasChairman = settings.chairman_model && settings.chairman_model.trim() !== '';
+      const models = settings.council_models || [];
+      const chairman = settings.chairman_model || '';
+
+      setCouncilModels(models);
+      setChairmanModel(chairman);
+
+      const hasCouncilMembers = models.some(m => m && m.trim() !== '');
+      const hasChairman = chairman && chairman.trim() !== '';
       setCouncilConfigured(hasCouncilMembers && hasChairman);
 
       // 4. If no providers are configured, open settings
@@ -84,9 +91,14 @@ function App() {
     setShowSettings(false);
     try {
       const settings = await api.getSettings();
-      const councilModels = settings.council_models || [];
-      const hasCouncilMembers = councilModels.some(m => m && m.trim() !== '');
-      const hasChairman = settings.chairman_model && settings.chairman_model.trim() !== '';
+      const models = settings.council_models || [];
+      const chairman = settings.chairman_model || '';
+
+      setCouncilModels(models);
+      setChairmanModel(chairman);
+
+      const hasCouncilMembers = models.some(m => m && m.trim() !== '');
+      const hasChairman = chairman && chairman.trim() !== '';
       setCouncilConfigured(hasCouncilMembers && hasChairman);
     } catch (error) {
       console.error('Failed to re-check council config:', error);
@@ -622,6 +634,8 @@ function App() {
         onAbort={handleAbort}
         isLoading={isLoading}
         councilConfigured={councilConfigured}
+        councilModels={councilModels}
+        chairmanModel={chairmanModel}
         onOpenSettings={(section) => {
           if (section) setSettingsInitialSection(section);
           setShowSettings(true);

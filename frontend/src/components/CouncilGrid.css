@@ -27,6 +27,42 @@
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.1);
 }
 
+/* ... existing styles ... */
+
+.model-name {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    position: relative;
+    /* For tooltip positioning */
+    cursor: help;
+}
+
+.model-name:hover::after {
+    content: attr(data-full-name);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 23, 42, 0.95);
+    color: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 100;
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 5px;
+}
+
 /* Role Badge */
 .role-badge {
     position: absolute;
@@ -41,6 +77,25 @@
     border-bottom-right-radius: 6px;
     font-weight: 700;
     width: 100%;
+}
+
+/* ... existing styles ... */
+
+.custom-tooltip {
+    position: fixed;
+    background: rgba(15, 23, 42, 0.95);
+    color: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    z-index: 9999;
+    pointer-events: none;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transform: translate(-50%, 20px);
+    /* Center horizontally, push down vertically */
 }
 
 .role-badge.member {
@@ -117,6 +172,13 @@
     z-index: 2;
 }
 
+.provider-logo {
+    width: 75%;
+    height: 75%;
+    object-fit: contain;
+    z-index: 2;
+}
+
 /* Thinking Animation */
 .thinking-ring {
     position: absolute;
@@ -187,6 +249,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
     max-width: 100%;
+    cursor: help;
 }
 
 .provider-label {

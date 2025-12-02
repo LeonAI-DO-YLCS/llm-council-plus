@@ -16,31 +16,13 @@ export default function ChatInterface({
     isLoading,
     councilConfigured,
     onOpenSettings,
+    councilModels = [],
+    chairmanModel = null,
 }) {
     const [input, setInput] = useState('');
     const [webSearch, setWebSearch] = useState(false);
-    const [councilModels, setCouncilModels] = useState([]);
-    const [chairmanModel, setChairmanModel] = useState(null);
     const messagesEndRef = useRef(null);
     const messagesContainerRef = useRef(null);
-
-    // Fetch settings to get council models for the welcome screen
-    useEffect(() => {
-        const fetchSettings = async () => {
-            try {
-                const settings = await api.getSettings();
-                if (settings.council_models) {
-                    setCouncilModels(settings.council_models);
-                }
-                if (settings.chairman_model) {
-                    setChairmanModel(settings.chairman_model);
-                }
-            } catch (error) {
-                console.error('Failed to fetch settings for council grid:', error);
-            }
-        };
-        fetchSettings();
-    }, []);
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

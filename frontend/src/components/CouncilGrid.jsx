@@ -1,29 +1,64 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import './CouncilGrid.css';
 
+// Import Provider Icons
+import openaiLogo from '../assets/icons/openai.svg';
+import anthropicLogo from '../assets/icons/anthropic.svg';
+import googleLogo from '../assets/icons/google.svg';
+import mistralLogo from '../assets/icons/mistral.svg';
+import ollamaLogo from '../assets/icons/ollama.svg';
+import deepseekLogo from '../assets/icons/deepseek.svg';
+import groqLogo from '../assets/icons/groq.svg';
+import openrouterLogo from '../assets/icons/openrouter.svg';
+
 const PROVIDER_CONFIG = {
-    openai: { color: '#10a37f', label: 'OpenAI', icon: '🟢' },
-    anthropic: { color: '#d97757', label: 'Anthropic', icon: '🟠' },
-    google: { color: '#4285f4', label: 'Google', icon: '🔵' },
-    meta: { color: '#0668E1', label: 'Meta', icon: 'Ⓜ️' },
-    mistral: { color: '#fcd34d', label: 'Mistral', icon: '🟡' },
-    groq: { color: '#f55036', label: 'Groq', icon: '⚡' },
-    ollama: { color: '#ffffff', label: 'Local', icon: '🦙' },
-    default: { color: '#888888', label: 'Model', icon: '🤖' }
+    openai: { color: '#10a37f', label: 'OpenAI', logo: openaiLogo },
+    anthropic: { color: '#d97757', label: 'Anthropic', logo: anthropicLogo },
+    google: { color: '#4285f4', label: 'Google', logo: googleLogo },
+    mistral: { color: '#fcd34d', label: 'Mistral', logo: mistralLogo },
+    groq: { color: '#f55036', label: 'Groq', logo: groqLogo },
+    ollama: { color: '#ffffff', label: 'Local', logo: ollamaLogo },
+    deepseek: { color: '#4e61e6', label: 'DeepSeek', logo: deepseekLogo },
+    openrouter: { color: '#7f5af0', label: 'OpenRouter', logo: openrouterLogo },
+    default: { color: '#888888', label: 'Model', logo: null, icon: '🤖' }
 };
 
 const getProviderInfo = (modelId) => {
     if (!modelId) return PROVIDER_CONFIG.default;
     const id = modelId.toLowerCase();
-    if (id.includes('gpt')) return PROVIDER_CONFIG.openai;
-    if (id.includes('claude')) return PROVIDER_CONFIG.anthropic;
-    if (id.includes('gemini') || id.includes('google')) return PROVIDER_CONFIG.google;
-    if (id.includes('llama')) return PROVIDER_CONFIG.meta;
-    if (id.includes('mistral') || id.includes('mixtral')) return PROVIDER_CONFIG.mistral;
-    if (id.startsWith('groq:')) return PROVIDER_CONFIG.groq;
+
+    // Check for provider prefixes FIRST
     if (id.startsWith('ollama:')) return PROVIDER_CONFIG.ollama;
+    if (id.startsWith('groq:')) return PROVIDER_CONFIG.groq;
+    if (id.startsWith('openrouter:') || id.includes('openrouter')) return PROVIDER_CONFIG.openrouter;
+
+    // Then check for specific model identifiers
+    if (id.includes('gpt') || id.includes('openai')) return PROVIDER_CONFIG.openai;
+    if (id.includes('claude') || id.includes('anthropic')) return PROVIDER_CONFIG.anthropic;
+    if (id.includes('gemini') || id.includes('google')) return PROVIDER_CONFIG.google;
+    if (id.includes('mistral') || id.includes('mixtral')) return PROVIDER_CONFIG.mistral;
+    if (id.includes('deepseek')) return PROVIDER_CONFIG.deepseek;
 
     return PROVIDER_CONFIG.default;
+};
+
+const getModelDisplayName = (modelId) => {
+    if (!modelId) return 'Model';
+    if (modelId.startsWith('placeholder')) return 'Council Member';
+
+    // Remove provider prefixes if present (e.g., "openai/", "anthropic/")
+    let name = modelId.split('/').pop();
+
+    // Remove "ollama:" prefix if present
+    name = name.replace(/^ollama:/, '');
+
+    // Remove colon-based prefixes (e.g., "anthropic:claude...", "ollama:llama3")
+    if (name.includes(':')) {
+        name = name.split(':').pop();
+    }
+
+    return name;
 };
 
 export default function CouncilGrid({
@@ -35,13 +70,49 @@ export default function CouncilGrid({
     // If no models provided, show placeholders
     const displayModels = models.length > 0 ? models : ['placeholder-1', 'placeholder-2', 'placeholder-3'];
 
+    // Tooltip State
+    const [tooltip, setTooltip] = React.useState({ visible: false, x: 0, y: 0, content: '' });
+
+    const handleMouseEnter = (e, modelId) => {
+        const content = getModelDisplayName(modelId);
+        setTooltip({
+            visible: true,
+            x: e.clientX,
+            y: e.clientY,
+            content
+        });
+    };
+
+    const handleMouseMove = (e) => {
+        setTooltip(prev => ({
+            ...prev,
+            x: e.clientX,
+            y: e.clientY
+        }));
+    };
+
+    const handleMouseLeave = () => {
+        setTooltip(prev => ({ ...prev, visible: false }));
+    };
+
     return (
         <div className="council-grid">
+            {/* Tooltip Portal */}
+            {tooltip.visible && createPortal(
+                <div
+                    className="custom-tooltip"
+                    style={{ left: tooltip.x, top: tooltip.y }}
+                >
+                    {tooltip.content}
+                </div>,
+                document.body
+            )}
+
             {/* Regular Council Members */}
             {displayModels.map((modelId, index) => {
                 const isPlaceholder = modelId.startsWith('placeholder');
                 const info = isPlaceholder ? PROVIDER_CONFIG.default : getProviderInfo(modelId);
-                const displayName = isPlaceholder ? 'Council Member' : modelId.split('/').pop().split(':')[0];
+                const displayName = getModelDisplayName(modelId);
 
                 // Determine state
                 let cardState = 'idle';
@@ -64,15 +135,24 @@ export default function CouncilGrid({
                         key={index}
                         className={`council-card ${cardState}`}
                         style={{ '--provider-color': info.color }}
+                        onMouseEnter={(e) => handleMouseEnter(e, modelId)}
+                        onMouseMove={handleMouseMove}
+                        onMouseLeave={handleMouseLeave}
                     >
                         <div className="role-badge member">Member #{index + 1}</div>
                         <div className="council-avatar">
-                            <span className="avatar-icon">{info.icon}</span>
+                            {info.logo ? (
+                                <img src={info.logo} alt={info.label} className="provider-logo" />
+                            ) : (
+                                <span className="avatar-icon">{info.icon}</span>
+                            )}
                             {cardState === 'active' && <div className="thinking-ring"></div>}
                             {cardState === 'done' && <div className="done-badge">✓</div>}
                         </div>
                         <div className="council-info">
-                            <span className="model-name" title={modelId}>{displayName}</span>
+                            <span className="model-name">
+                                {displayName}
+                            </span>
                             <span className="provider-label">{info.label}</span>
                         </div>
                     </div>
@@ -80,21 +160,24 @@ export default function CouncilGrid({
             })}
 
             {/* Chairman Card (Always last or distinct) */}
-            {chairman && (
-                <div
-                    className="council-card chairman ready"
-                    style={{ '--provider-color': '#fbbf24' }} // Gold for Chairman
-                >
-                    <div className="role-badge chairman">Chairman</div>
-                    <div className="council-avatar">
-                        <span className="avatar-icon">⚖️</span>
-                    </div>
-                    <div className="council-info">
-                        <span className="model-name" title={chairman}>{chairman.split('/').pop().split(':')[0]}</span>
-                        <span className="provider-label">Final Verdict</span>
-                    </div>
+            <div
+                className="council-card chairman ready"
+                style={{ '--provider-color': '#fbbf24' }} // Gold for Chairman
+                onMouseEnter={(e) => handleMouseEnter(e, chairman || 'Chairman')}
+                onMouseMove={handleMouseMove}
+                onMouseLeave={handleMouseLeave}
+            >
+                <div className="role-badge chairman">Chairman</div>
+                <div className="council-avatar">
+                    <span className="avatar-icon">⚖️</span>
                 </div>
-            )}
+                <div className="council-info">
+                    <span className="model-name">
+                        {chairman ? getModelDisplayName(chairman) : 'Model'}
+                    </span>
+                    <span className="provider-label">Final Verdict</span>
+                </div>
+            </div>
         </div>
     );
 }
