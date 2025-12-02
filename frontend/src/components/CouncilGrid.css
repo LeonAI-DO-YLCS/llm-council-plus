@@ -6,6 +6,14 @@
     max-width: 800px;
     margin: 20px auto;
     padding: 10px;
+
+    /* Use exactly 4 columns when there are 5+ items for better layout */
+}
+
+@media (min-width: 600px) {
+    .council-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
 }
 
 .council-card {
